@@ -1,120 +1,158 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from "react"
+import passages from "./data/data.json"
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [difficulty, setDifficulty] = useState("hard")
+  const [typed, setTyped] = useState("")
+  const [passage, setPassage] = useState("")
+
+  useEffect(() => {
+    loadPassage()
+  }, [difficulty])
+
+  const loadPassage = () => {
+    const list = passages[difficulty]
+    const random = Math.floor(Math.random() * list.length)
+    setPassage(list[random].text)
+    setTyped("")
+  }
+
+  const characters = passage.split("")
+
+  const handleTyping = (e) => {
+    setTyped(e.target.value)
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-neutral-900 text-white flex justify-center">
 
-      <div className="ticks"></div>
+      <div className="max-w-5xl w-full px-6 py-10">
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* Header */}
+        <div className="flex justify-between items-start mb-6">
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              ⌨️ Typing Speed Test
+            </h1>
+            <p className="text-sm text-neutral-400">
+              Type as fast as you can in 60 seconds
+            </p>
+          </div>
+
+          <div className="text-sm text-yellow-400">
+            🏆 Personal best: 0 WPM
+          </div>
+
+        </div>
+
+        {/* Stats */}
+        <div className="flex gap-6 text-lg mb-4">
+
+          <span>
+            WPM: <span className="font-semibold">0</span>
+          </span>
+
+          <span>
+            Accuracy: <span className="text-red-400">0%</span>
+          </span>
+
+          <span>
+            Time: <span className="text-yellow-300">0:00</span>
+          </span>
+
+        </div>
+
+        <hr className="border-neutral-700 mb-6"/>
+
+        {/* Controls */}
+        <div className="flex justify-between mb-6 text-sm">
+
+          {/* Difficulty */}
+          <div className="flex items-center gap-2">
+
+            <span className="text-neutral-400">Difficulty:</span>
+
+            {["easy","medium","hard"].map(level => (
+              <button
+                key={level}
+                onClick={() => setDifficulty(level)}
+                className={`px-3 py-1 rounded border 
+                ${difficulty === level
+                  ? "border-blue-500 text-blue-400"
+                  : "border-neutral-700 text-neutral-400"}
+                `}
+              >
+                {level.charAt(0).toUpperCase() + level.slice(1)}
+              </button>
+            ))}
+
+          </div>
+
+          {/* Mode */}
+          <div className="flex items-center gap-2">
+
+            <span className="text-neutral-400">Mode:</span>
+
+            <button className="px-3 py-1 rounded border border-blue-500 text-blue-400">
+              Timed (60s)
+            </button>
+
+            <button className="px-3 py-1 rounded border border-neutral-700 text-neutral-400">
+              Passage
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* Typing Area */}
+        <div className="bg-neutral-900 text-xl leading-relaxed">
+
+          {characters.map((char, index) => {
+
+            let style = "text-neutral-500"
+
+            if (index < typed.length) {
+              style =
+                typed[index] === char
+                  ? "text-green-400"
+                  : "text-red-400 underline"
+            }
+
+            return (
+              <span key={index} className={style}>
+                {char}
+              </span>
+            )
+          })}
+
+        </div>
+
+        {/* Hidden Input */}
+        <textarea
+          value={typed}
+          onChange={handleTyping}
+          className="opacity-0 absolute"
+          autoFocus
+        />
+
+        {/* Restart */}
+        <div className="flex justify-center mt-10">
+
+          <button
+            onClick={loadPassage}
+            className="bg-neutral-700 hover:bg-neutral-600 px-5 py-2 rounded flex items-center gap-2"
+          >
+            Restart Test ↻
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
   )
 }
 
