@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import passages from "./data/data.json"
 
 function App() {
@@ -7,22 +7,98 @@ function App() {
   const [typed, setTyped] = useState("")
   const [passage, setPassage] = useState("")
 
+  const [timeLeft, setTimeLeft] = useState(60)
+  const [isRunning, setIsRunning] = useState(false)
+
+  const [wpm, setWpm] = useState(0)
+  const [accuracy, setAccuracy] = useState(100)
+
+  const [best, setBest] = useState(
+    Number(localStorage.getItem("bestWPM")) || 0
+  )
+
+  const inputRef = useRef()
+
   useEffect(() => {
     loadPassage()
   }, [difficulty])
 
+  useEffect(() => {
+    if (!isRunning) return
+
+    if (timeLeft === 0) {
+      setIsRunning(false)
+
+      if (wpm > best) {
+        localStorage.setItem("bestWPM", wpm)
+        setBest(wpm)
+      }
+
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setTimeLeft((prev) => prev - 1)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+
+  }, [timeLeft, isRunning, wpm, best])
+
+
   const loadPassage = () => {
     const list = passages[difficulty]
     const random = Math.floor(Math.random() * list.length)
+
     setPassage(list[random].text)
+
     setTyped("")
+    setTimeLeft(60)
+    setWpm(0)
+    setAccuracy(100)
+    setIsRunning(false)
+
+    setTimeout(() => inputRef.current.focus(), 0)
   }
+
+
+  const calculateStats = (text) => {
+
+    let correct = 0
+
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === passage[i]) correct++
+    }
+
+    const acc = text.length
+      ? Math.round((correct / text.length) * 100)
+      : 100
+
+    const words = correct / 5
+    const minutes = (60 - timeLeft) / 60 || 1/60
+    const wpmCalc = Math.round(words / minutes)
+
+    setAccuracy(acc)
+    setWpm(wpmCalc)
+  }
+
+
+  const handleTyping = (e) => {
+
+    if (timeLeft === 0) return
+
+    if (!isRunning) setIsRunning(true)
+
+    const value = e.target.value
+
+    setTyped(value)
+
+    calculateStats(value)
+  }
+
 
   const characters = passage.split("")
 
-  const handleTyping = (e) => {
-    setTyped(e.target.value)
-  }
 
   return (
     <div className="min-h-screen bg-neutral-900 text-white flex justify-center">
@@ -30,51 +106,59 @@ function App() {
       <div className="max-w-5xl w-full px-6 py-10">
 
         {/* Header */}
+
         <div className="flex justify-between items-start mb-6">
 
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               ⌨️ Typing Speed Test
             </h1>
+
             <p className="text-sm text-neutral-400">
               Type as fast as you can in 60 seconds
             </p>
           </div>
 
           <div className="text-sm text-yellow-400">
-            🏆 Personal best: 0 WPM
+            🏆 Personal best: {best} WPM
           </div>
 
         </div>
 
+
         {/* Stats */}
+
         <div className="flex gap-6 text-lg mb-4">
 
           <span>
-            WPM: <span className="font-semibold">0</span>
+            WPM: <span className="font-semibold">{wpm}</span>
           </span>
 
           <span>
-            Accuracy: <span className="text-red-400">0%</span>
+            Accuracy: <span className="text-red-400">{accuracy}%</span>
           </span>
 
           <span>
-            Time: <span className="text-yellow-300">0:00</span>
+            Time: <span className="text-yellow-300">
+              0:{timeLeft.toString().padStart(2,"0")}
+            </span>
           </span>
 
         </div>
 
         <hr className="border-neutral-700 mb-6"/>
 
+
         {/* Controls */}
+
         <div className="flex justify-between mb-6 text-sm">
 
-          {/* Difficulty */}
           <div className="flex items-center gap-2">
 
             <span className="text-neutral-400">Difficulty:</span>
 
             {["easy","medium","hard"].map(level => (
+
               <button
                 key={level}
                 onClick={() => setDifficulty(level)}
@@ -86,35 +170,24 @@ function App() {
               >
                 {level.charAt(0).toUpperCase() + level.slice(1)}
               </button>
+
             ))}
-
-          </div>
-
-          {/* Mode */}
-          <div className="flex items-center gap-2">
-
-            <span className="text-neutral-400">Mode:</span>
-
-            <button className="px-3 py-1 rounded border border-blue-500 text-blue-400">
-              Timed (60s)
-            </button>
-
-            <button className="px-3 py-1 rounded border border-neutral-700 text-neutral-400">
-              Passage
-            </button>
 
           </div>
 
         </div>
 
+
         {/* Typing Area */}
-        <div className="bg-neutral-900 text-xl leading-relaxed">
+
+        <div className="bg-neutral-900 text-xl leading-relaxed min-h-[120px]">
 
           {characters.map((char, index) => {
 
             let style = "text-neutral-500"
 
             if (index < typed.length) {
+
               style =
                 typed[index] === char
                   ? "text-green-400"
@@ -130,15 +203,20 @@ function App() {
 
         </div>
 
+
         {/* Hidden Input */}
+
         <textarea
+          ref={inputRef}
           value={typed}
           onChange={handleTyping}
           className="opacity-0 absolute"
           autoFocus
         />
 
+
         {/* Restart */}
+
         <div className="flex justify-center mt-10">
 
           <button
